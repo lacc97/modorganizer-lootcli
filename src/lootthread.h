@@ -7,8 +7,10 @@
 #include <mutex>
 #include <filesystem>
 #include <game_settings.h>
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#if defined(WIN32)
+#   define WIN32_LEAN_AND_MEAN
+#   include <Windows.h>
+#endif
 
 
 namespace loot {

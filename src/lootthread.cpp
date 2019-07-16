@@ -34,9 +34,13 @@
 #include <cpptoml.h>
 #pragma warning(pop)
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <Shlobj.h>
+#if defined(WIN32)
+#   define WIN32_LEAN_AND_MEAN
+#   include <Windows.h>
+#   include <Shlobj.h>
+#else
+#   include <cstdlib>
+#endif
 
 using namespace loot;
 namespace fs = std::filesystem;
@@ -124,6 +128,7 @@ progress(description);
 
 
 fs::path GetLOOTAppData() {
+#if defined(WIN32)
     TCHAR path[MAX_PATH];
 
     HRESULT res = ::SHGetFolderPath(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, path);
@@ -133,6 +138,17 @@ fs::path GetLOOTAppData() {
     } else {
         return fs::path("");
     }
+#else
+    auto xdg_data = std::getenv("XDG_DATA_HOME");
+    if(xdg_data)
+        return fs::path(xdg_data) / "LOOT";
+
+    auto home = std::getenv("HOME");
+    if(home)
+        return fs::path(home)/".local"/"share";
+
+    return fs::path("");
+#endif
 }
 
 fs::path LOOTWorker::masterlistPath() {

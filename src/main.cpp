@@ -5,7 +5,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <windows.h>
+#if defined(WIN32)
+#   include <windows.h>
+#endif
 #include <stdio.h>
 
 #include <boost/locale.hpp>
@@ -45,10 +47,14 @@ bool getParameter<bool>(const std::vector<std::string> &arguments, const std::st
   }
 }
 
+#if defined(WIN32)
 int WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPTSTR    lpCmdLine,
 	int       nCmdShow)
+#else
+int main(int argc, char** argv)
+#endif
 {
   setlocale(LC_ALL, "en.UTF-8");
 
@@ -58,18 +64,26 @@ int WinMain(HINSTANCE hInstance,
   );
 
   std::vector<std::string> arguments;
+
+#if defined(WIN32)
   int argc;
   LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+#endif
 
   if (argv)
   {
 	  for (int i = 0; i < argc; ++i)
 	  {
+#if defined(WIN32)
 		  size_t num_converted;
 		  std::vector<char> arg(wcslen(argv[i]) * sizeof(wchar_t) + 1);
 
 		  wcstombs_s(&num_converted, &(arg[0]), arg.size(), argv[i], arg.size() - 1);
-
+#else
+		  // we may get encoding issues
+		  std::vector<char> arg(std::strlen(argv[i]) + 1);
+		  std::memcpy(arg.data(), argv[i], arg.size() - 1);
+#endif
 		  arguments.push_back(&(arg[0]));
 	  }
   }
